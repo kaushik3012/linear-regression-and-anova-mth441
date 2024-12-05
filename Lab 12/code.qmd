@@ -1,0 +1,116 @@
+---
+title: "MTH441 DOE Lab Assignment"
+author: "Kaushik Raj Nadar (208160499)"
+format: pdf
+editor: visual
+date: today
+---
+
+## Problem 1
+
+Create the Data Table
+
+```{r}
+if (!requireNamespace("dplyr", quietly = TRUE)) {
+  install.packages("dplyr")
+}
+library(dplyr)
+
+# Create the data frame with the given data
+data <- data.frame(
+  Fertilizer = rep(c("F1", "F2", "F3"), each = 3),
+  Crop = rep(c("Corn", "Rice", "Wheat"), times = 3),
+  MonthsHealthy = c(6, 4, 6, 5, 4.2, 5, 6, 5, 5.5)
+)
+
+# Check the structure of the data
+print(data)
+
+```
+
+Perform two-way ANOVA
+
+```{r}
+# Perform the two-way ANOVA
+anova_result <- aov(MonthsHealthy ~ Fertilizer, data = data)
+
+summary(anova_result)
+```
+
+Fertilizer: The p-value for the Fertilizer factor is 0.486, which is much greater than the common significance level of 0.05. This indicates that there is no statistically significant difference in the response variable (e.g., crop yield or health) across the three types of fertilizer tested. In other words, based on this data, none of the fertilizers appear to have a significantly different effect on the response variable.
+
+Residuals: The residuals represent the unexplained variation in the response variable after accounting for the effects of the fertilizers. The residual sum of squares and mean square provide an estimate of within-group variability, or the variation that cannot be attributed to differences between the fertilizers.
+
+## Problem 2
+
+```{r}
+# Create the data frame based on the provided data
+data <- data.frame(
+  Restaurant = rep(c("R1", "R2", "R3", "R4", "R5", "R6"), each = 3),
+  Item = rep(c("Item1", "Item2", "Item3"), times = 6),
+  Sales = c(31, 27, 24,
+            31, 28, 31,
+            45, 29, 46,
+            21, 18, 48,
+            42, 36, 46,
+            32, 17, 40)
+)
+
+# Check the structure of the data
+print(data)
+
+# Perform the ANOVA for Randomized Block Design
+rbd_model <- aov(Sales ~ Item + Restaurant, data = data)
+
+# Display the ANOVA table
+summary(rbd_model)
+```
+
+Item: The p-value for the Item factor is 0.0319, which is less than the significance level of 0.05. This indicates that there are statistically significant differences in sales figures among the three menu items. In other words, the popularity of the items is not equal, with at least one item having a different level of popularity compared to the others.
+
+Restaurant: The p-value for the Restaurant factor is 0.1547, which is greater than 0.05. This suggests that there are no statistically significant differences in sales figures across the six restaurants. While there may be some variability in sales figures from one restaurant to another, this variability does not significantly impact the overall analysis. Thus, restaurant location does not play a major role in the sales of these items within this dataset.
+
+Residuals: The residuals represent the unexplained variation in sales after accounting for the effects of both Item and Restaurant. The residual mean square (54.32) provides an estimate of the within-group variability, or how much variation remains unexplained by the factors in the model.
+
+## Problem 3
+
+```{r}
+# Load necessary package for Latin Square analysis
+if (!requireNamespace("agricolae", quietly = TRUE)) {
+  install.packages("agricolae")
+}
+library(agricolae)
+
+# Create data frame based on the problem's data
+data <- data.frame(
+  Tillage = rep(c("till1", "till2", "till3", "till4", "till5"), each = 5),
+  Fertilizer = rep(c("fertilizer1", "fertilizer2", "fertilizer3", "fertilizer4", "fertilizer5"), times = 5),
+  Seed = c("A", "C", "B", "D", "E",
+           "E", "B", "C", "A", "D",
+           "C", "A", "D", "E", "B",
+           "B", "D", "E", "C", "A",
+           "D", "E", "A", "B", "C"),
+  Productivity = c(42, 47, 55, 51, 44,
+                   45, 54, 52, 44, 50,
+                   41, 46, 57, 47, 48,
+                   56, 52, 49, 50, 43,
+                   47, 49, 45, 54, 46)
+)
+
+# Check the structure of the data
+print(data)
+
+# Perform ANOVA for Latin Square Design
+latin_square_model <- aov(Productivity ~ Seed + Fertilizer + Tillage, data = data)
+
+# Display the ANOVA table
+summary(latin_square_model)
+```
+
+Seed: The very low p-value (p \< 0.001) indicates that there are statistically significant differences in productivity across the different seed types (A, B, C, D, E). This means the type of seed used has a substantial impact on productivity. Since this factor is highly significant, follow-up tests (such as Tukey’s HSD) could identify specific pairs of seeds with significant differences.
+
+Fertilizer: The p-value for Fertilizer (p ≈ 0.014) is also significant, indicating that the type of fertilizer has a statistically significant effect on productivity. Though this is a blocking factor in our Latin square design (i.e., not the primary focus), it’s meaningful that fertilizer type still influences productivity.
+
+Tillage: The high p-value (p ≈ 0.55) for Tillage indicates that tillage type does not have a statistically significant effect on productivity in this experiment. This suggests that the variation in tillage types does not contribute much to changes in productivity under the conditions tested.
+
+Residuals: The residuals represent unexplained variability in productivity that isn’t accounted for by Seed, Fertilizer, or Tillage. The relatively low residual sum of squares indicates that the model explains a substantial portion of the variability in productivity.

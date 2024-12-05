@@ -1,0 +1,128 @@
+---
+title: "Lab 9 Solutions"
+author: "Kaushik Raj V Nadar (208160499)"
+date: "today"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+# Problem 1
+
+Consider the Time Delivery Data (full with 40 observations combined Table 3.2 and Table 11.2 from INTRODUCTION TO LINEAR REGRESSION ANALYSIS by MONTGOMERY et.al.). Split the data in Prediction and Estimation data sets equally. Use the Estimation Data.
+
+## Load Required Libraries
+
+```{r, message=FALSE}
+library(MPV)  # for time delivery dataset
+library(leaps)  # for subset selection
+```
+
+## Load Data
+
+```{r}
+time_delivery_data <- p15.4
+print(time_delivery_data)
+```
+
+Split the data into Estimation and Prediction sets
+
+```{r, eval=FALSE}
+# Using Random Split
+set.seed(123)  # for reproducibility
+n <- nrow(time_delivery_data)
+indices <- sample(1:n, size = n/2)
+
+estimation_data <- time_delivery_data[indices, c("x1", "x2", "y")]
+prediction_data <- time_delivery_data[-indices, c("x1", "x2", "y")]
+```
+
+```{r}
+# Using predefined split
+estimation_data <- time_delivery_data[time_delivery_data$set=='e', 
+                                      c("x1", "x2", "y")]
+prediction_data <- time_delivery_data[time_delivery_data$set=='p', 
+                                      c("x1", "x2", "y")]
+```
+
+## Part (a)
+
+Based on some subset selection criteria, propose two regression models.
+
+```{r}
+# Function to perform subset selection and return the best model
+get_best_subset <- function(data, nvmax) {
+  regsubsets_out <- regsubsets(y ~ ., data = data, nvmax = nvmax, method = "forward")
+  summary_out <- summary(regsubsets_out)
+  which.min(summary_out$bic)
+}
+
+# Model 1: Based on BIC
+best_subset_1 <- get_best_subset(estimation_data, nvmax = 2)
+formula_1 <- as.formula(paste("y ~", 
+paste(names(coef(lm(y ~ ., estimation_data)))[2:best_subset_1], 
+      collapse = " + ")))
+formula_1
+
+# Model 2: Full model
+formula_2 <- y ~ x1 + x2
+```
+
+## Part (b)
+
+For each models, compare the regression coefficients for Prediction and Estimation data sets.
+
+```{r, results='hold'}
+# Function to fit model and extract coefficients
+fit_and_extract <- function(formula, data) {
+  model <- lm(formula, data)
+  coef(model)
+}
+
+# Fit models and extract coefficients
+coef_est_1 <- fit_and_extract(formula_1, estimation_data)
+coef_pred_1 <- fit_and_extract(formula_1, prediction_data)
+coef_est_2 <- fit_and_extract(formula_2, estimation_data)
+coef_pred_2 <- fit_and_extract(formula_2, prediction_data)
+
+# Print coefficients
+cat("Model 1 coefficients:\n")
+print(rbind(Estimation = coef_est_1, Prediction = coef_pred_1))
+
+cat("\nModel 2 coefficients:\n")
+print(rbind(Estimation = coef_est_2, Prediction = coef_pred_2))
+
+```
+
+## Part (c)
+
+Compute the PRESS statistics and R2 prediction for both models using Prediction and Estimation data sets.
+
+```{r, results='hold'}
+# Function to compute PRESS and R2 prediction
+compute_press_r2pred <- function(formula, train_data, test_data) {
+  model <- lm(formula, train_data)
+  
+  # PRESS statistic
+  press <- sum((resid(model) / (1 - hatvalues(model)))^2)
+  
+  # R2 prediction
+  predictions <- predict(model, newdata = test_data)
+  sse <- sum((test_data$y - predictions)^2)
+  sst <- sum((test_data$y - mean(train_data$y))^2)
+  r2_pred <- 1 - sse / sst
+  
+  list(press = press, r2_pred = r2_pred)
+}
+
+# Compute PRESS and R2 prediction for both models
+results_1 <- compute_press_r2pred(formula_1, estimation_data, prediction_data)
+results_2 <- compute_press_r2pred(formula_2, estimation_data, prediction_data)
+
+# Print results
+cat("\nModel 1 results:\n")
+print(results_1)
+
+cat("\nModel 2 results:\n")
+print(results_2)
+```

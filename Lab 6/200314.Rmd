@@ -1,0 +1,68 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r, echo=TRUE}
+library(readxl)
+library(car)
+library(dplyr)
+
+###############
+#Question 1
+###############
+TimeDeliveryData <- read_excel("~/Desktop/MTH441/Labs/Lab 6/TimeDeliveryData.xlsx")
+
+#############
+#leverage points
+X <- as.matrix(cbind(1, TimeDeliveryData))
+H <- X %*% solve(t(X) %*% X) %*% t(X)
+leverage <- diag(H)
+
+#############
+#cook's distance
+model = lm(Y~X1+X2, TimeDeliveryData)
+cd <- cooks.distance(model)
+
+###########
+#DFBETAS
+dfb <- dfbetas(model)
+
+#############
+#DFFITS
+dff <- dffits(model)
+
+##############
+#COVRATIO
+covr <- covratio(model)
+
+#################
+#Question 2
+#################
+Acetylene_Data <- read_excel("~/Desktop/MTH441/Labs/Lab 6/Acetylene_Data.xlsx")
+
+mean_values <- colMeans(Acetylene_Data)
+std_dev_values <- apply(Acetylene_Data, 2, sd)
+Acetylene_Data_standardized <- sweep(Acetylene_Data, 2, mean_values, FUN = "-")
+Acetylene_Data_standardized <- sweep(Acetylene_Data_standardized, 2, std_dev_values, FUN = "/")
+
+squared_terms <- Acetylene_Data_standardized^2
+colnames(squared_terms) <- paste0(colnames(Acetylene_Data_standardized), "^2")
+
+interaction_terms <- data.frame(model.matrix(~.^2 - 1, data = Acetylene_Data_standardized))
+Acetylene_Data_standardized <- cbind(Acetylene_Data_standardized, squared_terms, interaction_terms)
+
+correlation_matrix <- cor(Acetylene_Data_standardized, use = "complete.obs")
+print(correlation_matrix)
+
+duplicated_columns <- which(duplicated(colnames(Acetylene_Data_standardized)))
+colnames(Acetylene_Data_standardized)[duplicated_columns] <- paste0(colnames(Acetylene_Data_standardized)[duplicated_columns], "_dup")
+Acetylene_Data_standardized <- Acetylene_Data_standardized[, !duplicated(colnames(Acetylene_Data_standardized))]
+
+model <- lm(Y ~ ., data = Acetylene_Data_standardized)
+model_step <- step(model)
+summary(model_step)
+vif_values <- vif(model_step)
+print(vif_values)
+```

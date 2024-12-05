@@ -1,0 +1,154 @@
+#Q1
+library(readxl)
+dataset <- read_excel("Electricity_Data.xlsx")
+View(dataset)
+
+
+model <- lm(Y~X, data=dataset)
+
+summary(model)
+
+plot(dataset$X, dataset$Y)
+abline(model, col='red')
+
+#Q2
+TimeDeliveryDataset <- read_excel("TimeDeliveryData.xlsx")
+View(TimeDeliveryDataset)
+
+model2 <- lm(Y~X1+X2, data=TimeDeliveryDataset)
+summary(model2)
+
+#Q3
+res <- model$residuals
+hatsigma <- (t(res)%*%res)/(length(res)-3)
+cat("σ2 = ", hatsigma)
+
+ones<-rep(1, length(res))
+X<-cbind(ones, dataset$X)
+C<-solve(t(X)%*%X)
+est.beta <- model$coefficients
+t.beta0 <- est.beta[1]/(sqrt(hatsigma*C[1,1]))
+cat("t0 = ", t.beta0)
+
+t.beta1 <- est.beta[2]/(sqrt(hatsigma*C[2,2]))
+cat("t1 = ", t.beta1)
+
+#Q4
+n <- 5000
+Z1 <- rnorm(n, mean = 0, sd = 1)
+Z2 <- rnorm(n, mean = 0, sd = 1)
+Z3 <- rnorm(n, mean = 0, sd = 1)
+W <- Z1^2 + Z2^2 + Z3^2
+head(W)
+
+hist(W, breaks = 50, main = "histogram of W", xlab = "W", col = "red")
+mean_W <- mean(W)
+var_W <- var(W)
+cat("Sample mean of W:", mean_W, "\n")
+cat("Sample variance of W:", var_W, "\n")
+
+theoretical_mean_W <- 3
+theoretical_var_W <- 6
+
+mean_difference <- abs(theoretical_mean_W - mean_W)
+variance_difference <- abs(theoretical_var_W - var_W)
+
+cat("Difference between theoretical mean and sample mean:", mean_difference, "\n")
+cat("Difference between theoretical variance and sample variance:", variance_difference, "\n")
+
+#Q5
+X <- matrix(rnorm(8 * 5), nrow = 8, ncol = 5)
+XtX_inv <- solve(t(X) %*% X)
+PX <- X %*% XtX_inv %*% t(X)
+
+PX_squared <- PX %*% PX
+
+is_idempotent <- all.equal(PX, PX_squared, tolerance = 1e-10)
+
+cat("Projection matrix P_X:\n")
+print(PX)
+
+cat("\nIs P_X idempotent? ", is_idempotent, "\n")
+
+
+n_samples <- 5000
+
+mu <- rep(0, 8)
+I <- diag(8)
+Y <- mvrnorm(n_samples, mu, I)
+
+u <- numeric(n_samples)
+for (i in 1:n_samples) {
+  u[i] <- t(Y[i, ]) %*% PX %*% Y[i, ]
+}
+
+cat("First few samples of u:\n")
+print(head(u))
+
+hist(u, breaks = 50, main = "Histogram of u", xlab = "u", col = "green")
+
+sample_mean_u <- mean(u)
+sample_var_u <- var(u)
+cat("Sample mean of u:", sample_mean_u, "\n")
+cat("Sample variance of u:", sample_var_u, "\n")
+
+theoretical_mean_u <- 5
+theoretical_var_u <- 10
+cat("Theoretical mean of u:", theoretical_mean_u, "\n")
+cat("Theoretical variance of u:", theoretical_var_u, "\n")
+
+mean_difference <- abs(theoretical_mean_u - sample_mean_u)
+variance_difference <- abs(theoretical_var_u - sample_var_u)
+
+cat("Difference between theoretical mean and sample mean:", mean_difference, "\n")
+cat("Difference between theoretical variance and sample variance:", variance_difference, "\n")
+
+#Q6
+# Load necessary libraries
+#library(MASS)
+
+# Define parameters
+n <- 5000
+mu <- rep(0, 8)
+I8 <- diag(8)
+df1 <- 3
+df2 <- 5
+
+# Generate Y from N(mu, I8)
+Y <- mvrnorm(n, mu, I8)
+
+# Define X1
+X1 <- matrix(rnorm(8 * df2), nrow = 8, ncol = df2)
+
+# Compute PX1 and PX2
+PX1 <- X1 %*% solve(t(X1) %*% X1) %*% t(X1)
+PX2 <- I8 - PX1
+
+# Compute f values
+f_values <- apply(Y, 1, function(y) {
+  (t(y) %*% PX2 %*% y / df1) / (t(y) %*% PX1 %*% y / df2)
+})
+
+# Plot the histogram of f
+hist(f_values, breaks = 50, main = "Histogram of F-distribution samples", xlab = "f values")
+
+# Compute sample mean and variance
+sample_mean <- mean(f_values)
+sample_variance <- var(f_values)
+
+# Compute theoretical mean and variance
+theoretical_mean <- df2 / (df2 - 2)
+theoretical_variance <- (2 * df2^2 * (df1 + df2 - 2)) / (df1 * (df2 - 2)^2 * (df2 - 4))
+
+# Print results
+cat("Sample Mean:", sample_mean, "\n")
+cat("Sample Variance:", sample_variance, "\n")
+cat("Theoretical Mean:", theoretical_mean, "\n")
+cat("Theoretical Variance:", theoretical_variance, "\n")
+
+
+mean_difference <- abs(theoretical_mean - sample_mean)
+variance_difference <- abs(theoretical_variance - sample_variance)
+
+cat("Difference between theoretical mean and sample mean:", mean_difference, "\n")
+cat("Difference between theoretical variance and sample variance:", variance_difference, "\n")

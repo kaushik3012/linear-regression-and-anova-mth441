@@ -1,0 +1,15 @@
+#Q3
+library(olsrr)
+
+# Input the data
+x <- c(1.0, 1.0, 2.0, 3.3, 3.3, 4.0, 4.0, 4.0, 5.6, 5.6, 6.0, 6.0, 6.5, 6.9)
+y <- c(10.84, 9.30, 16.35, 22.88, 24.35, 24.56, 25.86, 29.16, 27.20, 25.61, 25.45, 26.56, 21.03, 21.46)
+
+# Fit the linear model
+model <- lm(y ~ x)
+
+# Perform the lack-of-fit test
+lack_of_fit_test <- ols_pure_error_anova(model)
+
+# Print the results
+print(lack_of_fit_test)

@@ -1,0 +1,99 @@
+---
+title: "Lab 7 Solutions"
+
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+Name: Kaushik Raj V Nadar (208160499)
+
+# Problem 1
+
+P(1) Consider the Webster, Gunst, and Mason (WGM) data set given in Table 9.4 of Montgomery Book.
+
+Load Data
+```{r}
+library(readxl)
+dataset <- read_excel("Webster_Data.xlsx")
+
+WGM_data <- as.data.frame(dataset)
+```
+
+(a) Normalise the data set by subtracting the associated mean and dividing by the square root of (n - 1) × the sample variance of each variables.
+
+```{r}
+normalize_data <- function(data) {
+  n <- nrow(data)
+  norm_data <- scale(data, center = TRUE, scale = sqrt((n - 1) * apply(data, 2, var)))
+  return(norm_data)
+}
+
+# Assuming WGM_data is the dataset from Table 9.4 in Montgomery
+normalized_WGM_data <- normalize_data(WGM_data)
+normalized_WGM_data
+```
+
+(b) Find the VIFs
+```{r}
+calculate_vif_manual <- function(X) {
+  # Compute the X^T X matrix
+  XtX <- t(X) %*% X
+  
+  # Compute the inverse of (X^T X)
+  XtX_inv <- solve(XtX)
+  
+  # The diagonal elements of the inverse of X^T X give the VIF
+  vifs <- diag(XtX_inv)
+  
+  return(vifs)
+}
+
+
+X <- as.matrix(normalized_WGM_data[,-1])  # Exclude the response variable
+
+vifs <- calculate_vif_manual(X)
+vifs
+```
+
+(c) Find the condition number.
+```{r}
+XtX <- t(X) %*% X
+eigen_values <- eigen(XtX)$values
+condition_number <- max(eigen_values) / min(eigen_values)
+condition_number
+```
+
+(d) Find the eigen vectors and verify if it matches with the eigen vectors given in Table 9.6 of Montgomery
+Book.
+```{r}
+eigen_vectors <- eigen(XtX)$vectors
+eigen_vectors
+```
+
+# Problem 2
+
+P(2) Find variance Decomposition Proportions for the WGM data and verify if it matches with the results reported in Table 9.7 of Montgomery Book.
+```{r}
+calculate_vdp <- function(eigen_vectors, eigen_values, vifs) {
+  p <- ncol(eigen_vectors)  # Number of predictors
+  vdp_matrix <- matrix(0, nrow = p, ncol = p)  # Create a matrix to store VDPs
+  
+  # Loop over each predictor and each eigenvalue
+  for (j in 1:p) {
+    for (i in 1:p) {
+      t_ji <- eigen_vectors[j, i]  # Element of the eigenvector matrix
+      lam_i <- eigen_values[i]  # Square root of the eigenvalue
+      vdp_matrix[i, j] <- (t_ji^2 / lam_i) / vifs[j]  # Calculate the VDP
+    }
+  }
+  
+  return(vdp_matrix)
+}
+
+# Compute the Variance Decomposition Proportions
+vdp <- calculate_vdp(eigen_vectors, eigen_values, vifs)
+
+# Display the VDP matrix
+vdp
+```
